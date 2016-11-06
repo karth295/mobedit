@@ -1,0 +1,7 @@
+{
+  "name": "mobedit",
+  "version": "0.0.1",
+  "dependencies": {
+    "ot": "~0.0.15"
+  }
+}

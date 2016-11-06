@@ -1,0 +1,18 @@
+{
+  "name": "mobedit",
+  "version": "0.0.1",
+  "repository": "https://github.com/karth295/mobedit.git",
+  "author": "Karthik Palaniappan <karth295@uw.edu>",
+  "engines": {
+    "node": ">= 7.0.0"
+  },
+  "dependencies": {
+    "ot": "~0.0.15",
+    "body-parser": "~1.15.2",
+    "express": "~4.14.0",
+    "statebus": "~4.0.27"
+  },
+  "scripts": {
+    "postinstall": "bower install"
+  }
+}
