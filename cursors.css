@@ -1,0 +1,8 @@
+.cursor {
+	border-left: 2px solid;
+	position: absolute;
+}
+
+.green-cursor {
+	border-left-color: green;
+}

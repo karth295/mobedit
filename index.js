@@ -8,6 +8,7 @@ const ot = require('ot');
 const bus = require('statebus/server')({
     port: 8004,
     file_store: false,
+    client: (client) => {},
 });
 
 const server = new ot.Server("// Write some JS!");

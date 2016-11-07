@@ -1,11 +1,15 @@
+<!-- Include this first because we want the version
+     of react that comes later to take precedence -->
 <script src="https://stateb.us/client4.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.5/ace.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react-dom.min.js"></script>
+
 <script src="/bower_components/ot/dist/ot.js"></script>
 
-<div id="container"></div>
+<link rel="stylesheet" href="/cursors.css">
+<script src="/collaborative_editor.js"></script>
 
 <script>
 "use strict";
@@ -13,171 +17,15 @@
 window.statebus_server = window.location.protocol + '//' + window.location.hostname + ':8004';
 window.statebus_version = 4;
 
-const AceRange = ace.require('ace/range').Range;
-
-let editor = null;
-class AceEditor extends React.Component {
-    constructor(props) {
-        super(props)
-
-        this.name = 'hello';
-        this.client = null;
-        this.editor = null;
-        this.timer = null;
-        this.revision = -1;
-        this.skipChange = false;
-    }
-
-    createOTClient(revision) {
-        this.client = new ot.Client(revision);
-        window.client = this.client;
-
-        bus.fetch('/ops', (ops) => {
-            ops.all = ops.all || [];
-            ops.ids = ops.ids || [];
-
-            console.log('fetch /ops', this.client, ops);
-            for (let i = this.client.revision; i < ops.all.length; i++) {
-                const operation = ot.TextOperation.fromJSON(ops.all[i]);
-
-                if (ops.ids[i] == this.client.currentId) {
-                    this.client.serverAck();
-                } else {
-                    try {
-                        this.client.applyServer(operation);
-                    } catch (e) {
-                        console.error(e);
-                    }
-                }
-            }
-        });
-
-        this.client.applyOperation = (operation) => {
-            console.log("applyOperation", operation);
-            let currentIndex = 0;
-            const doc = this.editor.getSession().getDocument();
-            for (const op of operation.ops) {
-                console.log("Doing something with", op);
-                if (ot.TextOperation.isRetain(op)) {
-                    currentIndex += op;
-                    console.log("\tRetain", op, currentIndex);
-                } else if (ot.TextOperation.isInsert(op)) {
-                    this.skipChange = true;
-                    doc.insert(doc.indexToPosition(currentIndex), op);
-                    this.skipChange = false;
-
-                    currentIndex += op.length;
-                    console.log("\tInsert", op, currentIndex);
-                } else {
-                    const start = doc.indexToPosition(currentIndex);
-                    const end = doc.indexToPosition(currentIndex - op); // op is negative
-                    console.log("Deleting", start, end);
-                    const range = new AceRange(start.row, start.column, end.row, end.column);
-
-                    this.skipChange = true;
-                    doc.remove(range);
-                    this.skipChange = false;
-
-                    console.log("\tDelete", op, currentIndex);
-                }
-            }
-        };
-
-        this.client.sendOperation = (revision, operation) => {
-            console.log("sendOperation", revision, operation);
-            this.client.currentId = Math.random().toString(36).substring(7);
-            bus.save({
-                key: '/op',
-                revision: revision,
-                operation: operation,
-                id: this.client.currentId,
-            });
-        }
-    }
-
-    createEditor(text) {
-        this.editor = ace.edit(this.name);
-        window.editor = this.editor;
-        this.editor.setValue(text);
-        this.editor.getSession().setMode("ace/mode/javascript");
-        this.editor.setTheme("ace/theme/twilight");
-
-        this.editor.on('change', (changeObj) => {
-            if (this.skipChange) {
-                console.log("Skipping", changeObj);
-                return;
-            }
-
-            const totalLength = this.editor.getValue().length;
-            const doc = this.editor.getSession().getDocument();
-            const startPosition = doc.positionToIndex(changeObj.start);
-            const diff = changeObj.lines.join('\n');
-
-            const operation = new ot.TextOperation().retain(startPosition);
-            if (changeObj.action == 'insert') {
-
-                operation.insert(diff).retain(totalLength - (startPosition + diff.length));
-
-            } else if (changeObj.action == 'remove') {
-
-                operation.delete(diff).retain(totalLength - startPosition);
-
-            } else {
-
-                throw Error(`Unexpected action ${changeObj.action}`);
-
-            }
-            
-            console.log("onchange", operation);
-            try {
-                this.client.applyClient(operation);
-            } catch (e) {
-                console.error(e);
-            }
-        });
-    }
-
-    componentDidMount() {
-        const handlr = (document) => {
-            if (document.text === undefined) {
-                return;
-            }
-
-            this.createOTClient(document.revision);
-            this.createEditor(document.text);
-
-            bus.forget('/document', handlr);
-        }
-        bus.fetch('/document', handlr);
-    }
-
-    render() {
-        return React.DOM.div({
-            id: this.name,
-            style: {
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                right: 0,
-                left: 0,
-            }
-        });
-    }
-}
-
+// XXX: horrible hack. I should really give statebus client a library load callback
 function waitForClientToLoad() {
     if (!window.bus) {
         setTimeout(waitForClientToLoad, 100);
     } else {
-        ReactDOM.render(React.createElement(AceEditor), document.getElementById('container'));
+        ReactDOM.render(React.createElement(CollaborativeEditor), document.body);
     }
-};
+}
 
 waitForClientToLoad();
 </script>
 
-<style>
-    highlight {
-        border-left: 1 px solid white;
-    }
-</style>
