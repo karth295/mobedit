@@ -1,0 +1,41 @@
+"use strict";
+
+class Foo extends StatebusComponent {
+    constructor(props) {
+        super(props);
+    }
+
+    componentWillMount() {
+        this.timer = setInterval(() => {
+            const val = Math.random();
+            console.log("Update foo", val);
+            this.statebus['/foo'] = val;
+        }, 1000);
+    }
+
+    render() {
+        if (!this.statebus['/foo']) {
+            return React.DOM.div({}, 'Loading!');;
+        }
+
+        console.log("Render", this.statebus['/foo']);
+        return React.DOM.div({
+            style: {
+                position: 'absolute',
+                top: 0,
+                bottom: '50%',
+                right: '50%',
+                left: 0,
+                backgroundColor: 'blue',
+           },
+        }, '' + this.statebus['/foo']);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.timer);
+    }
+}
+
+ReactDOM.render(React.createElement(Foo), document.body);
+
+

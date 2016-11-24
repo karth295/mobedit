@@ -17,6 +17,17 @@ class CollaborativeEditor extends React.Component {
         this.client = new ot.Client(revision);
         window.client = this.client;
 
+        bus('cursors').to_fetch = (key) => {
+            const connections = bus.fetch('/connections').all || [];
+            const cursors = connections
+                .filter(el => el.cursor !== undefined && el.id != this.id)
+                .map(el => el.cursor);
+
+            return {
+                all: cursors,
+            }
+        }
+
         bus.fetch('/ops', (ops) => {
             ops.all = ops.all || [];
             ops.ids = ops.ids || [];
@@ -70,9 +81,10 @@ class CollaborativeEditor extends React.Component {
     createEditor(text) {
         this.editor = ace.edit(this.name);
         window.editor = this.editor;
-        this.editor.setValue(text);
+        this.editor.setValue(text, 1);
         this.editor.getSession().setMode("ace/mode/javascript");
         this.editor.setTheme("ace/theme/twilight");
+        this.editor.focus();
 
         this.editor.on('change', (changeObj) => {
             if (this.skipChange) {
@@ -105,9 +117,7 @@ class CollaborativeEditor extends React.Component {
             });
         });
 
-        bus.fetch('/connections', (connections) => {
-            connections.all = connections.all || [];
-
+        bus.fetch('cursors', (cursors) => {
             const session = this.editor.getSession();
             const doc = session.getDocument();
 
@@ -115,7 +125,7 @@ class CollaborativeEditor extends React.Component {
                 session.removeMarker(markerid);
             }
 
-            for (const cursorPos of connections.all.filter(el => el.cursor !== undefined && el.id != this.id).map(el => el.cursor)) {
+            for (const cursorPos of cursors.all) {
                 const cursorRowCol = doc.indexToPosition(cursorPos);
                 const nextChar = {
                     row: cursorRowCol.row,

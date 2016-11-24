@@ -1,31 +1,62 @@
-<!-- Include this first because we want the version
-     of react that comes later to take precedence -->
-<script src="https://stateb.us/client4.js"></script>
+<body></body>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.5/ace.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react-dom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.3.1/react-dom.js"></script>
 
 <script src="/bower_components/ot/dist/ot.js"></script>
 
-<link rel="stylesheet" href="/cursors.css">
-<script src="/collaborative_editor.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.1/sockjs.js"></script>
+<script src="/statebus.js"></script>
 
 <script>
 "use strict";
 
 window.statebus_server = window.location.protocol + '//' + window.location.hostname + ':8004';
 window.statebus_version = 4;
+</script>
+<script src="/client.js"></script>
 
-// XXX: horrible hack. I should really give statebus client a library load callback
-function waitForClientToLoad() {
-    if (!window.bus) {
-        setTimeout(waitForClientToLoad, 100);
-    } else {
-        ReactDOM.render(React.createElement(CollaborativeEditor), document.body);
-    }
-}
+<link rel="stylesheet" href="/cursors.css">
+<script src="/collaborative_editor.js"></script>
 
-waitForClientToLoad();
+<script>
+
+bus.fetch('/code', (code) => {
+    console.log("Fetched", code);
+    eval(code.text);
+})
+
+// ReactDOM.render(React.createElement(CollaborativeEditor), document.body);
+
+// bus('counter').to_fetch = (key) => {
+//     let value = 0;
+//     setInterval(() => {
+//         value++;
+//         bus.save.fire({
+//             key: key,
+//             value: value
+//         });
+//     }, 1000);
+
+//     return {
+//         value: value
+//     }
+// }
+
+// class Counter extends StatebusComponent {
+//     constructor(props) {
+//         super(props);
+//     }
+
+//     render() {
+//         if (!this.mounted) {
+//             return React.DOM.div({}, "Loading...");
+//         }
+//         return React.DOM.div({}, "" + this.state.statebus.counter.value);
+//     }
+// }
+
+// ReactDOM.render(React.createElement(Counter), document.body);
 </script>
 

@@ -1,3 +1,4 @@
+const fs = require('fs');
 const bodyParser = require('body-parser');
 const express = require('express');
 const app = express();
@@ -36,6 +37,20 @@ bus('/op').to_save = (obj) => {
 
     bus.dirty('/ops');
 }
+
+readFile = () => {
+    fs.readFile('FILE', 'utf8', (err, data) => {
+        if (err) throw err;
+        
+        bus.save.fire({
+            key: '/code',
+            text: data,
+        })
+    });
+};
+
+readFile();
+fs.watch('FILE', readFile);
 
 app.use(express.static(__dirname + '/'));
 app.listen(8000);
